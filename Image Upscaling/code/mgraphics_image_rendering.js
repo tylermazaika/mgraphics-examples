@@ -7,7 +7,7 @@ Date: 2024-03-29
 
 ------------------------------------------------------------------------------------------------------------
 
-Demonstrates how to use Image() with scale() in mgraphics to improve drawing performance while preserving high quality drawing on different display pixel densities (DPI -- Dots Per Inch).
+Demonstrates how to use Image() with scale() in MGraphics to improve drawing performance while preserving high quality drawing on different display pixel densities (DPI -- Dots Per Inch).
 
 Without using scale(), Image() anti-aliasing is lost on higher DPI displays.
 
@@ -30,7 +30,7 @@ mgraphics.relative_coords = 0
 // Store the drawn Image between calls to paint().
 var cachedImg = null
 
-// The scale factor use for the cached Image()
+// The scale factor used for the cached Image()
 var imgScale = 2
 
 // mouseover bool
@@ -43,74 +43,72 @@ var useImage = 1
 
 
 function paint() {
-	with (mgraphics) {
 
-		// A background just to demonstrate between the drawing of cached and the regular mgraphics context drawing
-		rectangle(0,0,size[0],size[1])
-		set_source_rgba( max.getcolor("live_lcd_bg") )
-		fill()
+	// A background just to demonstrate between the drawing of cached and the regular MGraphics context drawing
+	mgraphics.rectangle(0,0, mgraphics.size[0], mgraphics.size[1])
+	mgraphics.set_source_rgba( max.getcolor("live_lcd_bg") )
+	mgraphics.fill()
 
 
-		if ( useImage ) {
+	if ( useImage ) {
+		
+
+		/****************************************************************************************
+		Image drawing/scaling.
+		*****************************************************************************************/
+
+
+		if ( ! cachedImg ) {
+			// If there is no cachedImg we will redraw one in a non-visible MGraphics context and then store it as an Image object.
+
+			// Make the new MGraphics context.  We're setting the size based on the main MGraphics (mgraphics) visible size, but "upscaled" by imgScale.  IMPORTANT: If the size of this MGraphics context is not upscaled (e.g. based on mgraphics.size itself), then when we create the Image() object the Image will appear cropped.
+			var tmp_mg = new MGraphics( mgraphics.size[0] * imgScale, mgraphics.size[1] * imgScale )
 			
+			// Scale the drawing commands up for the tmp_mg context.
+			tmp_mg.scale(imgScale, imgScale)
+			
+			// Do the "complex" drawing into the tmp_mg context.
+			drawStuff(tmp_mg)
 
-			/****************************************************************************************
-			Image drawing/scaling.
-			*****************************************************************************************/
-
-
-			if ( ! cachedImg ) {
-				// If there is no cachedImg we will redraw one in a non-visible MGraphics context and then store it as an Image object.
-
-				// Make the new MGraphics context.  We're setting the size based on the main mgraphics visible size, but "upscaled" by imgScale.  IMPORTANT: If the size of this MGraphics context is not upscaled (e.g. based on mgraphics.size itself), then when we create the Image() object the Image will appear cropped.
-				var tmp_mg = new MGraphics( mgraphics.size[0] * imgScale, mgraphics.size[1] * imgScale )
-				
-				// Scale the drawing commands up for the tmp_mg context.
-				tmp_mg.scale(imgScale, imgScale)
-				
-				// Do the "complex" drawing into the tmp_mg context.
-				drawStuff(tmp_mg)
-
-				// Once the drawing is done, store it by making a new Image() object from the tmp_mg context.
-				cachedImg = new Image(tmp_mg)
-			}
-
-			// Invert the upscaled amount to shrink the Image into the expected size.
-			scale( 1/imgScale, 1/imgScale )	
-
-			// Draws the cachedImg at the current origin (0,0 by default).
-			image_surface_draw( cachedImg )
-
-			// Since we may do drawing later we want to undo the scale() call above.
-			identity_matrix()  // ALTERNATIVELY:  scale( imgScale, imgScale )
-
-
-			/****************************************************************************************
-			End Image drawing/scaling.
-			*****************************************************************************************/
-
-
-		} else {
-
-			// Do the "complex" drawing directly into the screen mgraphics context.  No scaling is required to get anti-aliased text.
-			drawStuff(mgraphics)
+			// Once the drawing is done, store it by making a new Image() object from the tmp_mg context.
+			cachedImg = new Image(tmp_mg)
 		}
 
+		// Invert the upscaled amount to shrink the Image into the expected size.
+		mgraphics.scale( 1/imgScale, 1/imgScale )	
 
-		// Other drawing can be done on top of the image.
-		if ( idle ) {
+		// Draws the cachedImg at the current origin (0,0 by default).
+		mgraphics.image_surface_draw( cachedImg )
 
-			// Makes a little indicator when the mouse is over this jsui.
-			var r_size = 5
-			set_source_rgba( max.getcolor("live_active_automation") )
-			rectangle( size[0]-2*r_size, (size[1]-r_size)/2, r_size, r_size )
-			fill()
-		}
+		// Since we may do drawing later we want to undo the scale() call above.
+		mgraphics.identity_matrix()  // ALTERNATIVELY:  scale( imgScale, imgScale )
 
 
-		// Show when normal drawing happens
-		outlet(0, "bang")
+		/****************************************************************************************
+		End Image drawing/scaling.
+		*****************************************************************************************/
+
+
+	} else {
+
+		// Do the "complex" drawing directly into the screen MGraphics context.  No scaling is required to get anti-aliased text.
+		drawStuff(mgraphics)
 	}
+
+
+	// Other drawing can be done on top of the image.
+	if ( idle ) {
+
+		// Makes a little indicator when the mouse is over this jsui.
+		var r_size = 5
+		mgraphics.set_source_rgba( max.getcolor("live_active_automation") )
+		mgraphics.rectangle( mgraphics.size[0]-2*r_size, (mgraphics.size[1]-r_size)/2, r_size, r_size )
+		mgraphics.fill()
+	}
+
+
+	// Show when normal drawing happens
+	outlet(0, "bang")
 }
 
 
@@ -119,58 +117,57 @@ function paint() {
 /*
 Sample drawing code.
 
+The argument "mg" is an MGraphics object / context, in which stuff will be drawn.
+
 Note that all the pixel / font sizes can be expressed in their normal 1x-scale values.
 */
-function drawStuff( mgraphics_context ) {
+function drawStuff( mg ) {
 
-	// Using an mgraphics_context argument means we can call this same drawing code when drawing into both the onscreen and offscreen mgraphics contexts.
-	
-	with (mgraphics_context) {
+	// Passing an MGraphics context as the argument "mg" means we can call this same drawing code when drawing into both the onscreen and offscreen MGraphics contexts.
 
-		/*
-		Because we can set scale() on mgraphics_context outside this function, for any drawing based on the geometry of the screen mgraphics context we should refer to the size property of the screen mgraphics directly.  
+	/*
+	Because we can set scale() on the MGraphics context outside this function, for any drawing based on the geometry of the screen MGraphics context we should refer to the size property of the screen MGraphics directly.  
 
-		If we instead used mgraphics_context.size, we could effectively be applying the scaling twice: Once by scaling the offscreen context's size, and again by calling scale() within that context.
-		*/
-		var _size = mgraphics.size
+	If we instead used mg.size, we could effectively be applying the scaling twice: Once by scaling the offscreen context's size, and again by applying scale() to that context.
+	*/
+	var _size = mgraphics.size
 
 
-		// Rectangle Frame
+	// Rectangle Frame
 
-		set_line_width(1)
-
-
-		////////// IMPORTANT: if we will modify the transform matrix inside drawStuff(), then to return to the original state we DON'T want to use identity_matrix(), since it also would reset the scale() setting.  So instead, use get_matrix() and set_matrix().
-		var mtx = get_matrix()
+	mg.set_line_width(1)
 
 
-		// On 1x scale displays, thin lines (e.g. 1px) render best when they are offset by a half-pixel.  NOTE: Using translate() here is to justify demonstration of the get_matrix()/set_matrix() pairing.
-		translate(1.5, 1.5)
+	////////// IMPORTANT: if we will modify the transform matrix inside drawStuff(), then to return to the original state we DON'T want to use identity_matrix(), since it also would reset the scale() setting.  So instead, use get_matrix() and set_matrix().
+	var mtx = mg.get_matrix()
 
 
-		// Make a rectangle based on the size of the screen/main mgraphics context.
-		rectangle(0, 0, _size[0]-3, _size[1]-3)
-		set_source_rgba( max.getcolor("live_lcd_bg") )
-		fill_preserve()
-		set_source_rgba( max.getcolor("live_lcd_control_fg") )
-		stroke()
+	// On 1x scale displays, thin lines (e.g. 1px) render best when they are offset by a half-pixel.  NOTE: Using translate() here is to justify demonstration of the get_matrix()/set_matrix() pairing.
+	mg.translate(1.5, 1.5)
 
 
-		////////// Restores the matrix to whatever it was prior to translate(1.5, 1.5) above.
-		set_matrix(mtx)
+	// Make a rectangle based on the size of the screen/main MGraphics context.
+	mg.rectangle(0, 0, _size[0]-3, _size[1]-3)
+	mg.set_source_rgba( max.getcolor("live_lcd_bg") )
+	mg.fill_preserve()
+	mg.set_source_rgba( max.getcolor("live_lcd_control_fg") )
+	mg.stroke()
 
 
-		// Text
+	////////// Restores the matrix to whatever it was prior to translate(1.5, 1.5) above.
+	mg.set_matrix(mtx)
 
-		var str = "A quick brown fox jumps over the lazy dog."
-		select_font_face("Ableton Sans Medium")
-		set_font_size(10)
 
-		var txtsize = text_measure(str)
-		move_to( 5, (_size[1] + txtsize[1]/2)/2 )
-		set_source_rgba( max.getcolor("live_lcd_control_fg_alt"))
-		show_text(str)
-	}
+	// Text
+
+	var str = "A quick brown fox jumps over the lazy dog."
+	mg.select_font_face("Ableton Sans Medium")
+	mg.set_font_size(10)
+
+	var txtsize = mg.text_measure(str)
+	mg.move_to( 5, (_size[1] + txtsize[1]/2)/2 )
+	mg.set_source_rgba( max.getcolor("live_lcd_control_fg_alt"))
+	mg.show_text(str)
 
 	// Show when this drawing code is executed.
 	outlet(1, "bang")
