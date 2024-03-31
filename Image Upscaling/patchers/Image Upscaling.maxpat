@@ -21,7 +21,7 @@
 		"gridsnaponopen" : 1,
 		"objectsnaponopen" : 1,
 		"statusbarvisible" : 2,
-		"toolbarvisible" : 1,
+		"toolbarvisible" : 0,
 		"lefttoolbarpinned" : 0,
 		"toptoolbarpinned" : 0,
 		"righttoolbarpinned" : 0,
@@ -406,7 +406,7 @@
  ],
 		"dependency_cache" : [ 			{
 				"name" : "mgraphics_image_rendering.js",
-				"bootpath" : "/private/tmp/mgraphics-examples/MGraphics Image Usage for Complex UI/code",
+				"bootpath" : "/private/tmp/mgraphics-examples/Image Upscaling/code",
 				"patcherrelativepath" : "../code",
 				"type" : "TEXT",
 				"implicit" : 1

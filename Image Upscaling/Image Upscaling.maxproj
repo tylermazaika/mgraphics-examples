@@ -1,8 +1,8 @@
 {
-	"name" : "MGraphics Image Usage for Complex UI",
+	"name" : "Image Upscaling",
 	"version" : 1,
 	"creationdate" : 3794589830,
-	"modificationdate" : 3794700168,
+	"modificationdate" : 3794703414,
 	"viewrect" : [ 25.0, 81.0, 300.0, 500.0 ],
 	"autoorganize" : 1,
 	"hideprojectwindow" : 0,
@@ -10,7 +10,7 @@
 	"autolocalize" : 0,
 	"contents" : 	{
 		"patchers" : 		{
-			"MGraphics Image Usage for Complex UI.maxpat" : 			{
+			"Image Upscaling.maxpat" : 			{
 				"kind" : "patcher",
 				"local" : 1,
 				"toplevel" : 1
